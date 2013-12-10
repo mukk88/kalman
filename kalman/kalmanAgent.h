@@ -20,55 +20,36 @@ class KalmanAgent {
 public:
 
 	KalmanAgent(int i, BZRC* bzrc, double changeInT, double friction, string c) 
-	: index(i), commandCenter(bzrc), color(c) {
+	: index(i), commandCenter(bzrc), color(c), f(friction) {
+		int x, y;
+		x = y = 0;
+		if (color.compare("blue") == 0){
+			x = 150;
+			y = -150;
+		}
+		else if (color.compare("red") == 0){
+			x = -150;
+			y = -150;
+		}
+		else {
+			x = 0;
+			y = -150;
+		}
 		MatrixXd u2(6,1);
-		u2 << 0, 0, 0, -390, 0, 0;
+		u2 << x, 0, 0, y, 0, 0;
 		u = u2;
-		MatrixXd Sigmat2(6,6);
-		Sigmat2 << 100, 0, 0, 0, 0, 0, 
-			0, .01, 0, 0, 0, 0, 
-			0 , 0, .01, 0, 0, 0, 
-			0, 0, 0, 100, 0, 0, 
-			0, 0, 0, 0, .01, 0, 
-			0, 0, 0, 0, 0, .01;
-		Sigmat = Sigmat2;
-		MatrixXd F2(6,6);
-		F2 << 1, changeInT, 0*(pow(changeInT, 2) / 2), 0, 0, 0,
-			0, 1, 0*changeInT, 0, 0, 0,
-			0, (-1 * friction), 0*1, 0, 0, 0,
-			0, 0, 0, 1, changeInT, 0*(pow(changeInT, 2) / 2),
-			0, 0, 0, 0, 1, 0*changeInT,
-			0, 0, 0, 0, (-1 * friction), 0*1;
-		F = F2;
+		
+		F = getForceMatrix(changeInT, 1);
 		Ftranspose = F.transpose();
-		MatrixXd Sigmax2(6,6);
-		Sigmax2 << .1, 0, 0, 0, 0, 0, 
-			0, .02, 0, 0, 0, 0, 
-			0 , 0, .01, 0, 0, 0, 
-			0, 0, 0, .1, 0, 0, 
-			0, 0, 0, 0, .02, 0, 
-			0, 0, 0, 0, 0, .01;
-		Sigmax = Sigmax2;
-		MatrixXd H2(2, 6);
-		H2 << 1, 0, 0, 0, 0, 0, 
-			0, 0, 0, 1, 0, 0;
-		H = H2;
-		Htranspose = H.transpose();
-		MatrixXd Sigmaz2(2, 2);
-		Sigmaz2 << 25, 0, 0, 25;
-		Sigmaz = Sigmaz2;
-		f = friction;
+		reset();
 	}
 
 	void reset(){
-		MatrixXd u2(6,1);
-		u2 << 0, 0, 0, -390, 0, 0;
-		u = u2;
 		MatrixXd Sigmat2(6,6);
-		Sigmat2 << 100, 0, 0, 0, 0, 0, 
+		Sigmat2 << 5, 0, 0, 0, 0, 0, 
 			0, .01, 0, 0, 0, 0, 
 			0 , 0, .01, 0, 0, 0, 
-			0, 0, 0, 100, 0, 0, 
+			0, 0, 0, 5, 0, 0, 
 			0, 0, 0, 0, .01, 0, 
 			0, 0, 0, 0, 0, .01;
 		Sigmat = Sigmat2;
@@ -88,6 +69,30 @@ public:
 		MatrixXd Sigmaz2(2, 2);
 		Sigmaz2 << 25, 0, 0, 25;
 		Sigmaz = Sigmaz2;
+		// MatrixXd Sigmat2(6,6);
+		// Sigmat2 << 100, 0, 0, 0, 0, 0, 
+		// 	0, .1, 0, 0, 0, 0, 
+		// 	0 , 0, .1, 0, 0, 0, 
+		// 	0, 0, 0, 100, 0, 0, 
+		// 	0, 0, 0, 0, .1, 0, 
+		// 	0, 0, 0, 0, 0, .1;
+		// Sigmat = Sigmat2;
+		// MatrixXd Sigmax2(6,6);
+		// Sigmax2 << .1, 0, 0, 0, 0, 0, 
+		// 	0, .1, 0, 0, 0, 0, 
+		// 	0 , 0, 100, 0, 0, 0, 
+		// 	0, 0, 0, .1, 0, 0, 
+		// 	0, 0, 0, 0, .1, 0, 
+		// 	0, 0, 0, 0, 0, 100;
+		// Sigmax = Sigmax2;
+		// MatrixXd H2(2, 6);
+		// H2 << 1, 0, 0, 0, 0, 0, 
+		// 	0, 0, 0, 1, 0, 0;
+		// H = H2;
+		// Htranspose = H.transpose();
+		// MatrixXd Sigmaz2(2, 2);
+		// Sigmaz2 << 25, 0, 0, 25;
+		// Sigmaz = Sigmaz2;
 	}
 
 	MatrixXd GetKtplus1(MatrixXd force){
@@ -115,12 +120,15 @@ public:
 		return z;
 	}
 
-	string update(){
+	string update(double changeInTime){
 		MatrixXd z = getObservation();
-		MatrixXd Ktplus1 = GetKtplus1(F);
+		MatrixXd F2 = getForceMatrix(changeInTime, 0);
+		MatrixXd Ktplus1 = GetKtplus1(F2);
+		if (color == "green")
+			std:: cout << u << std::endl; 
 		updateMean(Ktplus1, z);
 		updateError(Ktplus1);
-		std::cout << z << std::endl << std::endl;
+		//std::cout << z << std::endl << std::endl;
 
 		return outputValues();
 	}
@@ -135,24 +143,22 @@ public:
 		double accy = u(5,0);
 		double velx = u(1,0);
 		double vely = u(4,0);
+		MatrixXd z = getObservation();
 		stringstream ss;
-		ss << " " << sigmax << " " << sigmay << " " << 
-			meanx << " " << meany << " " << velx << " " << vely << " " << accx << " " << accy << "\n";
+		// ss << 0 << " " << sigmax << " " << sigmay << " " << 
+		// 	meanx << " " << meany << " " << velx << " " << vely << " " << accx << " " << accy << "\n";
+		ss << meanx << " " << meany << " " << z(0,0) << " "  << z(1,0) << "\n";
 		return ss.str();
 	}
 
 	string predict(int changeTime){
 
-		MatrixXd F2(6,6);
-		F2 << 1, changeTime, 0*(pow(changeTime, 2) / 2), 0, 0, 0,
-			0, 1, 0*changeTime, 0, 0, 0,
-			0, (-1 * f), 0*1, 0, 0, 0,
-			0, 0, 0, 1, changeTime, 0*(pow(changeTime, 2) / 2),
-			0, 0, 0, 0, 1, 0*changeTime,
-			0, 0, 0, 0, (-1 * f), 0*1;
+		f = 0;
+		// std::cout << u << std::endl;
+		MatrixXd F2 = getForceMatrix(changeTime, 0);
 
 		MatrixXd z = getObservation();
-		std::cout << z << std::endl << std::endl;
+		// std::cout << z << std::endl << std::endl;
 
 		// MatrixXd Ktplus1 = GetKtplus1(F2);
 		u = F2*u;
@@ -171,9 +177,15 @@ public:
 			Ktplus1*H)*(F*Sigmat*Ftranspose + Sigmax);
 	}
 
-	void point(int angle){
-
-
+	MatrixXd getForceMatrix(double changeInT, int acc){
+		MatrixXd F2(6,6);
+		F2 << 1, changeInT, acc*(pow(changeInT, 2) / 2), 0, 0, 0,
+			0, 1, acc*changeInT, 0, 0, 0,
+			0, (-1 * f), acc*1, 0, 0, 0,
+			0, 0, 0, 1, changeInT, acc*(pow(changeInT, 2) / 2),
+			0, 0, 0, 0, 1, acc*changeInT,
+			0, 0, 0, 0, (-1 * f), acc*1;
+		return F2;
 	}
 
 	Node getPos(){

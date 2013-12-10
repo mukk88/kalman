@@ -5,7 +5,7 @@ base
 position 0 150 0
 rotation 0
 size 20 20 0
-color 1
+color 4
 end
 
 base
@@ -26,5 +26,5 @@ base
 position -150 -150 0
 rotation 0
 size 20 20 0
-color 4
+color 1
 end

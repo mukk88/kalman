@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_DEPRECATE 1
+#define _USE_MATH_DEFINES
 #include <iostream>
 #include <unistd.h>
 #include <ctype.h>
@@ -7,13 +8,14 @@
 #include "command.h"
 #include "kalmanAgent.h"
 #include "randomAgent.h"
+#include <time.h>
 
 using namespace std;
 
 //cmd: ./bin/bzrflag --world=maps/blank.bzw --blue-tanks=1 --red-tanks=1 --green-tanks=1 --purple-tanks=1 --default-posnoise=5
 
-int myX = -390;
-int myY = 0;
+double myX = 0;
+double myY = 150;
 
 
 double myAngle(BZRC* command){
@@ -21,10 +23,10 @@ double myAngle(BZRC* command){
     command->get_mytanks(tanks);
     double a = tanks[0].angle;
     if(a>=0){
-        cout << "me "  << a << endl;
+        //cout << "me "  << a << endl;
         return a;
     }else{
-        cout << "me "  << 6.28+a << endl;
+        //cout << "me "  << 6.28+a << endl;
         return 6.28 + a;
     }
 }
@@ -40,22 +42,33 @@ double myAngle(double a){
 
 double theirAngle(Node n){
     double ret = myAngle(atan2(-myY + n.y, -myX + n.x));
-    cout << "them: " <<ret << endl;
-    // return myAngle(atan2(myY - n.y, myX - n.x));
     return ret;
 }
 
 double changeInAngle(BZRC* command, Node n){
+
     double me = myAngle(command);
     double them = theirAngle(n);
-    double large = me > them ? me : them;
-    double small = me > them ? them : me;
-    double diff = large- small;
+    double diff = me - them;
+    if (abs(diff) <= M_PI)
+        return -diff;
+    else {
+        if (diff < 0){ // negative
+            return -1*(M_PI*2 + diff);
+        }
+        else {
+            return -1 * (diff - 2*M_PI);
+        }
+    }
+}
 
-
-    diff = me > them ? 6.28-diff : diff; 
-
-    return diff;
+double getBulletTime(BZRC* purple, Node futurePos){
+    vector<tank_t> tanks;
+    purple->get_mytanks(tanks);
+    myX = tanks[0].pos[0];
+    myY = tanks[0].pos[1];
+    double dist = sqrt(pow(futurePos.x-myX,2)+pow(futurePos.y-myY,2));
+    return dist/100;
 }
 
 
@@ -104,12 +117,13 @@ int main(int argc, char *argv[]) {
 
     green->speed(0,0.3);
 
-    double sleepAmount = 1;    
+    double sleepAmount = .5;    
 
-    RandomAgent random(0, blue, 10);
-    KalmanAgent kalmanGreen(0, purple, sleepAmount, .0, "blue");
-    // KalmanAgent kalmanBlue(0, purple, sleepAmount, .0, "blue");
-    // KalmanAgent kalmanRed(0, purple, sleepAmount, .0, "red");
+    RandomAgent random(0, blue, 5);
+    random.move();
+    KalmanAgent kalmanGreen(0, purple, sleepAmount, 0, "green");
+    KalmanAgent kalmanBlue(0, purple, sleepAmount, 0, "blue");
+    KalmanAgent kalmanRed(0, purple, sleepAmount, 0, "red");
 
     ofstream greenFile;
     ofstream redFile;
@@ -118,52 +132,95 @@ int main(int argc, char *argv[]) {
     redFile.open ("values-red.dat");
     blueFile.open ("values-blue.dat");
 
-    while(true){
+    bool shoot = false;
+    time_t currentTime;
+    time_t prevTime;
+    time(&prevTime);
+    while (true){
         bool stopped = false;
         purple->speed(0,0);
-        for (int i = 0; i < 20; i++){
-            sleep(sleepAmount);
+
+
+
+        random.move();
+        greenFile << kalmanGreen.update(sleepAmount);
+        blueFile << kalmanBlue.update(sleepAmount);
+        redFile << kalmanRed.update(sleepAmount);
+        Node n = kalmanGreen.getPos();
+        cout << "enemy tank: " << n.x << " " << n.y << endl;
+        cout << "angle to enemy: " << changeInAngle(purple,n) << endl;
+
+
+
+        //while (abs(changeInAngle(purple,n)) > .005){
+        for (int i = 0; i < 15; ++i) {
+            if (shoot)
+                usleep(10000);//sleepAmount);
+            else 
+                usleep(sleepAmount * 1000000);
+            time(&currentTime);  /* get current time; same as: timer = time(NULL)  */
+
+            double seconds = difftime(currentTime,prevTime);
+            prevTime = currentTime;
+            
+
+
             random.move();
-            greenFile << kalmanGreen.update();
-            Node n = kalmanGreen.getPos();
-            double a = changeInAngle(purple,n);
-            cout << a << endl;
-            if(a>0.8 && !stopped){
-                purple->angvel(0,0.8);
-            }else{
-                purple->speed(0,1);
-                stopped = true;
-                purple->angvel(0,0);
+            greenFile << kalmanGreen.update(seconds);
+            blueFile << kalmanBlue.update(seconds);
+            redFile << kalmanRed.update(seconds);
+
+
+
+            if (shoot){
+                Node n = kalmanGreen.getPos();
+                double a = changeInAngle(purple,n);
+                cout << a << endl;
+                purple->angvel(0, a*3);
             }
+            n = kalmanGreen.getPos();
         }
         purple->angvel(0,0);
-        purple->speed(0,0);
-
-        greenFile << endl;
         stopped = false;
 
+        if (shoot) {
+            double shootTime = 5;
 
-        greenFile << kalmanGreen.predict(5*(sleepAmount));
-        Node futurePos = kalmanGreen.getPos();
-        double futureA = changeInAngle(purple,futurePos);
+            greenFile << kalmanGreen.predict((shootTime+8)*(sleepAmount));
+            Node futurePos = kalmanGreen.getPos();
+            time(&currentTime);  /* get current time; same as: timer = time(NULL)  */
 
-        purple->angvel(0,1);
-        cout << "futureA " <<  futureA << endl;
-        double timeleft = 5 - abs(futureA/0.601); 
-        cout << "sleep time " << max(abs(futureA/0.601)-0.05,0.0) << endl;
-        sleep(max(abs(futureA/0.601)-0.05,1.0));
-        purple->angvel(0,0);
-        double dist = sqrt(pow(futurePos.x-myX,2)+pow(futurePos.y-myY,2));
-        double bullettime = dist/100;
-        double sleeptime = timeleft - bullettime;
-        if(sleeptime>0){
-            sleep(sleeptime);
+            while (abs(changeInAngle(purple,futurePos)) > .005){
+                usleep(10000);//sleepAmount);
+                double a = changeInAngle(purple,futurePos);
+                cout << a << endl;
+                purple->angvel(0, a*3);           
+            }
+            purple->angvel(0,0);
+            time(&prevTime);
+            double seconds = difftime(currentTime,prevTime);
+            
+            double timeleft = shootTime - seconds - getBulletTime(purple, futurePos); 
+            if (timeleft > 0)
+                sleep(timeleft);
+            
+            cout << "timeleft: " << timeleft << endl;
+            purple->shoot(0);
+
+            kalmanGreen.reset();
         }
-        purple->shoot(0);
-
-        kalmanGreen.reset();
-        
+        else {
+            break;
+        }        
     }
+
+    for (int i = 0; i < 10; i++){
+        usleep(sleepAmount * 1000000);
+        greenFile << kalmanGreen.predict(i*(sleepAmount));  
+        blueFile << kalmanBlue.predict(i*(sleepAmount));
+        redFile << kalmanRed.predict(i*(sleepAmount));      
+    }
+
 
     greenFile.close();
     redFile.close();

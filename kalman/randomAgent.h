@@ -11,11 +11,14 @@ class RandomAgent {
 public:
 
 	RandomAgent(int i, BZRC* bzrc, int cycles) : index(i), commandCenter(bzrc), ticker(0), changeCycles(cycles) {
+		cout <<  "called" << endl;
 		srand(time(NULL));
+		commandCenter->speed(index, randomNumber());
+		commandCenter->angvel(index, randomNumber());
 	}
 
 	void move(){
-		if (ticker++ > changeCycles){
+		if (ticker++ >= changeCycles){
 			commandCenter->speed(index, randomNumber());
 			commandCenter->angvel(index, randomNumber());
 			ticker = 0;
@@ -29,7 +32,7 @@ private:
 	const int changeCycles;
 
 	double randomNumber(){
-		return (double (rand() % 1000)) / (1000.0);
+		return (double (rand() % 500) + 500) / (1000.0);
 	}
 };
 
