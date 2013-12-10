@@ -16,14 +16,14 @@ color 2
 end
 
 base
-position 150 0 0
+position 150 -150 0
 rotation 0
 size 20 20 0
 color 3
 end
 
 base
-position -150 0 0
+position -150 -150 0
 rotation 0
 size 20 20 0
 color 4
