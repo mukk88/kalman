@@ -1,0 +1,30 @@
+#Saved by 470MapEditor
+#Which was made by Spencer James Clark
+
+base
+position 2 380 0
+rotation 0
+size 20 20 0
+color 1
+end
+
+base
+position 2 -378 0
+rotation 0
+size 20 20 0
+color 2
+end
+
+base
+position 380 5 0
+rotation 0
+size 20 20 0
+color 3
+end
+
+base
+position -380 -2 0
+rotation 0
+size 20 20 0
+color 4
+end

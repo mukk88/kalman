@@ -1,0 +1,36 @@
+set xrange [-400.0: 400.0]
+set yrange [-400.0: 400.0]
+set pm3d
+set view map
+unset key
+set size square
+
+unset arrow
+
+# What color scheme to use
+# see http://gnuplot.sourceforge.net/demo_4.0/pm3dcolors.html
+#set palette gray
+#set palette color
+#set palette model XYZ functions gray**0.35, gray**0.5, gray**0.8
+set palette model RGB functions 1-gray, 1-gray, 1-gray
+
+# How fine the plotting should be, at some processing cost:
+set isosamples 100
+#set isosamples 30
+
+#------------------draw the point----------------
+posx = system("head -n1 values-green.dat | awk '{print $4}'")
+posy = system("head -n1 values-green.dat | awk '{print $5}'")
+
+set arrow from posx-5,posy to posx,posy-5 nohead front lt 3 linecolor rgb "green"
+set arrow from posx,posy-5 to posx+5,posy nohead front lt 3 linecolor rgb "green"
+set arrow from posx+5,posy to posx,posy+5 nohead front lt 3 linecolor rgb "green"
+set arrow from posx,posy+5 to posx-5,posy nohead front lt 3 linecolor rgb "green"
+
+#------------------draw the distribution----------------
+
+sigma_x = system("head -n1 values-green.dat | awk '{print $2}'")
+sigma_y = system("head -n1 values-green.dat | awk '{print $3}'")
+rho = system("head -n1 values-green.dat | awk '{print $1}'")
+
+splot 1.0/(2.0 * pi * sigma_x * sigma_y * sqrt(1 - rho**2)) * exp(-1.0/2.0 * ((x-posx)**2 / sigma_x**2 + (y-posy)**2 / sigma_y**2 - 2.0*rho*(x-posx)*(y-posy)/(sigma_x*sigma_y)))   with pm3d
