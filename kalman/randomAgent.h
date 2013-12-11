@@ -11,7 +11,7 @@ class RandomAgent {
 public:
 
 	RandomAgent(int i, BZRC* bzrc, int cycles) : index(i), commandCenter(bzrc), ticker(0), changeCycles(cycles) {
-		cout <<  "called" << endl;
+		//cout <<  "called" << endl;
 		srand(time(NULL));
 		commandCenter->speed(index, randomNumber());
 		commandCenter->angvel(index, randomNumber());

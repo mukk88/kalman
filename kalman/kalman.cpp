@@ -23,10 +23,10 @@ double myAngle(BZRC* command){
     command->get_mytanks(tanks);
     double a = tanks[0].angle;
     if(a>=0){
-        //cout << "me "  << a << endl;
+        //// // cout << "me "  << a << endl;
         return a;
     }else{
-        //cout << "me "  << 6.28+a << endl;
+        //// // cout << "me "  << 6.28+a << endl;
         return 6.28 + a;
     }
 }
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
                 pcHost = optarg;
                 break;
             default:
-                cout << "client [-s IP address] [-c port], where c is the first char of the color" << endl;
+                // // cout << "client [-s IP address] [-c port], where c is the first char of the color" << endl;
                 exit(EXIT_FAILURE);
         }
     }
@@ -138,7 +138,8 @@ int main(int argc, char *argv[]) {
 
     KalmanAgent trackedAgent = kalmanGreen;
 
-    while (true){
+    for (int i = 0; i < 3; i++) {
+    //while (true){
         bool stopped = false;
         purple->speed(0,0);
 
@@ -148,10 +149,10 @@ int main(int argc, char *argv[]) {
         // greenFile << kalmanGreen.update(sleepAmount);
         // blueFile << kalmanBlue.update(sleepAmount);
         // redFile << kalmanRed.update(sleepAmount);
-        trackedFile << trackedAgent.update(sleepAmount);
+        trackedAgent.update(sleepAmount);
         Node n = trackedAgent.getPos();
-        cout << "enemy tank: " << n.x << " " << n.y << endl;
-        cout << "angle to enemy: " << changeInAngle(purple,n) << endl;
+        // // cout << "enemy tank: " << n.x << " " << n.y << endl;
+        // // cout << "angle to enemy: " << changeInAngle(purple,n) << endl;
 
 
 
@@ -169,7 +170,7 @@ int main(int argc, char *argv[]) {
 
 
             random.move();
-            trackedFile << trackedAgent.update(seconds);
+            trackedAgent.update(seconds);
             // greenFile << kalmanGreen.update(seconds);
             // blueFile << kalmanBlue.update(seconds);
             // redFile << kalmanRed.update(seconds);
@@ -187,10 +188,10 @@ int main(int argc, char *argv[]) {
         if (shoot) {
             double shootTime = 5;
 
-            redFile << trackedAgent.predict(shootTime+8);
+            trackedAgent.predict(shootTime+8);
 
             Node futurePos = trackedAgent.getPos();
-            cout << "predicted shot location: " << futurePos.x << ", " << futurePos.y << endl;
+            // // cout << "predicted shot location: " << futurePos.x << ", " << futurePos.y << endl;
             time(&currentTime);  /* get current time; same as: timer = time(NULL)  */
 
             while (abs(changeInAngle(purple,futurePos)) > .005){
@@ -206,12 +207,12 @@ int main(int argc, char *argv[]) {
             if (timeleft > 0)
                 sleep(timeleft);
             
-            cout << "timeleft: " << timeleft << endl;
+            // // cout << "timeleft: " << timeleft << endl;
             purple->shoot(0);
             sleep(getBulletTime(purple, futurePos));
             vector<tank_t> tanks;
             green->get_mytanks(tanks);
-            cout << "actual position (noisy): " << tanks[0].pos[0] << ", " << tanks[0].pos[1] << endl; 
+            // // cout << "actual position (noisy): " << tanks[0].pos[0] << ", " << tanks[0].pos[1] << endl; 
 
             trackedAgent.reset();
         }
@@ -222,7 +223,7 @@ int main(int argc, char *argv[]) {
 
     for (int i = 0; i < 10; i++){
         usleep(sleepAmount * 1000000);
-        trackedFile << trackedAgent.predict(i*sleepAmount);
+        // cout << trackedAgent.predict(i*sleepAmount);
         // greenFile << kalmanGreen.predict(i*(sleepAmount));  
         // blueFile << kalmanBlue.predict(i*(sleepAmount));
         // redFile << kalmanRed.predict(i*(sleepAmount));      

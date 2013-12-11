@@ -127,6 +127,7 @@ public:
 		 
 		updateMean(Ktplus1, z, changeInTime);
 		updateError(Ktplus1, changeInTime);
+		std::cout << Sigmat(0,0)  << " " <<  Sigmat(3,3) << std::endl;
 		//std::cout << z << std::endl << std::endl;
 
 		return outputValues(u);
