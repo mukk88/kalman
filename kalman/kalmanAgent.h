@@ -25,15 +25,15 @@ public:
 		x = y = 0;
 		if (color.compare("blue") == 0){
 			x = 150;
-			y = -150;
+			y = -100;
 		}
 		else if (color.compare("red") == 0){
 			x = -150;
-			y = -150;
+			y = -100;
 		}
 		else {
 			x = 0;
-			y = -150;
+			y = -100;
 		}
 		MatrixXd u2(6,1);
 		u2 << x, 0, 0, y, 0, 0;
@@ -45,45 +45,21 @@ public:
 	}
 
 	void reset(){
-		MatrixXd Sigmat2(6,6);
-		Sigmat2 << 5, 0, 0, 0, 0, 0, 
-			0, .01, 0, 0, 0, 0, 
-			0 , 0, .01, 0, 0, 0, 
-			0, 0, 0, 5, 0, 0, 
-			0, 0, 0, 0, .01, 0, 
-			0, 0, 0, 0, 0, .01;
-		Sigmat = Sigmat2;
-		MatrixXd Sigmax2(6,6);
-		Sigmax2 << .1, 0, 0, 0, 0, 0, 
-			0, .02, 0, 0, 0, 0, 
-			0 , 0, .01, 0, 0, 0, 
-			0, 0, 0, .1, 0, 0, 
-			0, 0, 0, 0, .02, 0, 
-			0, 0, 0, 0, 0, .01;
-		Sigmax = Sigmax2;
-		MatrixXd H2(2, 6);
-		H2 << 1, 0, 0, 0, 0, 0, 
-			0, 0, 0, 1, 0, 0;
-		H = H2;
-		Htranspose = H.transpose();
-		MatrixXd Sigmaz2(2, 2);
-		Sigmaz2 << 25, 0, 0, 25;
-		Sigmaz = Sigmaz2;
 		// MatrixXd Sigmat2(6,6);
-		// Sigmat2 << 100, 0, 0, 0, 0, 0, 
-		// 	0, .1, 0, 0, 0, 0, 
-		// 	0 , 0, .1, 0, 0, 0, 
-		// 	0, 0, 0, 100, 0, 0, 
-		// 	0, 0, 0, 0, .1, 0, 
-		// 	0, 0, 0, 0, 0, .1;
+		// Sigmat2 << 5, 0, 0, 0, 0, 0, 
+		// 	0, .01, 0, 0, 0, 0, 
+		// 	0 , 0, .01, 0, 0, 0, 
+		// 	0, 0, 0, 5, 0, 0, 
+		// 	0, 0, 0, 0, .01, 0, 
+		// 	0, 0, 0, 0, 0, .01;
 		// Sigmat = Sigmat2;
 		// MatrixXd Sigmax2(6,6);
 		// Sigmax2 << .1, 0, 0, 0, 0, 0, 
-		// 	0, .1, 0, 0, 0, 0, 
-		// 	0 , 0, 100, 0, 0, 0, 
+		// 	0, .02, 0, 0, 0, 0, 
+		// 	0 , 0, .01, 0, 0, 0, 
 		// 	0, 0, 0, .1, 0, 0, 
-		// 	0, 0, 0, 0, .1, 0, 
-		// 	0, 0, 0, 0, 0, 100;
+		// 	0, 0, 0, 0, .02, 0, 
+		// 	0, 0, 0, 0, 0, .01;
 		// Sigmax = Sigmax2;
 		// MatrixXd H2(2, 6);
 		// H2 << 1, 0, 0, 0, 0, 0, 
@@ -93,6 +69,30 @@ public:
 		// MatrixXd Sigmaz2(2, 2);
 		// Sigmaz2 << 25, 0, 0, 25;
 		// Sigmaz = Sigmaz2;
+		MatrixXd Sigmat2(6,6);
+		Sigmat2 << 100, 0, 0, 0, 0, 0, 
+			0, .1, 0, 0, 0, 0, 
+			0 , 0, .1, 0, 0, 0, 
+			0, 0, 0, 100, 0, 0, 
+			0, 0, 0, 0, .1, 0, 
+			0, 0, 0, 0, 0, .1;
+		Sigmat = Sigmat2;
+		MatrixXd Sigmax2(6,6);
+		Sigmax2 << .1, 0, 0, 0, 0, 0, 
+			0, .1, 0, 0, 0, 0, 
+			0 , 0, 100, 0, 0, 0, 
+			0, 0, 0, .1, 0, 0, 
+			0, 0, 0, 0, .1, 0, 
+			0, 0, 0, 0, 0, 100;
+		Sigmax = Sigmax2;
+		MatrixXd H2(2, 6);
+		H2 << 1, 0, 0, 0, 0, 0, 
+			0, 0, 0, 1, 0, 0;
+		H = H2;
+		Htranspose = H.transpose();
+		MatrixXd Sigmaz2(2, 2);
+		Sigmaz2 << 25, 0, 0, 25;
+		Sigmaz = Sigmaz2;
 	}
 
 	MatrixXd GetKtplus1(MatrixXd force){
@@ -124,25 +124,24 @@ public:
 		MatrixXd z = getObservation();
 		MatrixXd F2 = getForceMatrix(changeInTime, 0);
 		MatrixXd Ktplus1 = GetKtplus1(F2);
-		if (color == "green")
-			std:: cout << u << std::endl; 
-		updateMean(Ktplus1, z);
-		updateError(Ktplus1);
+		 
+		updateMean(Ktplus1, z, changeInTime);
+		updateError(Ktplus1, changeInTime);
 		//std::cout << z << std::endl << std::endl;
 
-		return outputValues();
+		return outputValues(u);
 	}
 
-	string outputValues(){
+	string outputValues(MatrixXd temp){
 		//row sigmax sigmay x y
 		double sigmax = Sigmat(0,0);
 		double sigmay = Sigmat(3,3);
-		double meanx = u(0,0);
-		double meany = u(3,0);
-		double accx = u(2,0);
-		double accy = u(5,0);
-		double velx = u(1,0);
-		double vely = u(4,0);
+		double meanx = temp(0,0);
+		double meany = temp(3,0);
+		double accx = temp(2,0);
+		double accy = temp(5,0);
+		double velx = temp(1,0);
+		double vely = temp(4,0);
 		MatrixXd z = getObservation();
 		stringstream ss;
 		// ss << 0 << " " << sigmax << " " << sigmay << " " << 
@@ -161,24 +160,28 @@ public:
 		// std::cout << z << std::endl << std::endl;
 
 		// MatrixXd Ktplus1 = GetKtplus1(F2);
-		u = F2*u;
+		MatrixXd u2 = F2*u;
 		// updateError(Ktplus1);
-		return outputValues();
+		return outputValues(u2);
 	}
 
-	void updateMean(MatrixXd Ktplus1, MatrixXd z){
+	void updateMean(MatrixXd Ktplus1, MatrixXd z, double changeInTime){
 		//μt + 1 = Fμt + Kt + 1(zt + 1 − HFμt)
-		u = F*u + Ktplus1*(z - H*F*u);
+		MatrixXd F2 = getForceMatrix(changeInTime, 1);
+		u = F2*u + Ktplus1*(z - H*F2*u);
 	}
 
-	void updateError(MatrixXd Ktplus1){
+	void updateError(MatrixXd Ktplus1, double changeInTime){
 		//Σt + 1 = (I − Kt + 1H)(FΣtFT + Σx) 
+		MatrixXd F2 = getForceMatrix(changeInTime, 1);
 		Sigmat = (Eigen::Matrix<double, 6, 6>::Identity() - 
-			Ktplus1*H)*(F*Sigmat*Ftranspose + Sigmax);
+			Ktplus1*H)*(F2*Sigmat*F2.transpose() + Sigmax);
 	}
 
 	MatrixXd getForceMatrix(double changeInT, int acc){
 		MatrixXd F2(6,6);
+		acc = 1;
+		f = 0;
 		F2 << 1, changeInT, acc*(pow(changeInT, 2) / 2), 0, 0, 0,
 			0, 1, acc*changeInT, 0, 0, 0,
 			0, (-1 * f), acc*1, 0, 0, 0,

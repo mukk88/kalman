@@ -2,28 +2,28 @@
 #Which was made by Spencer James Clark
 
 base
-position 0 150 0
+position 0 100 0
 rotation 0
 size 20 20 0
 color 4
 end
 
 base
-position 0 -150 0
+position 0 -100 0
 rotation 0
 size 20 20 0
 color 2
 end
 
 base
-position 150 -150 0
+position 150 -100 0
 rotation 0
 size 20 20 0
 color 3
 end
 
 base
-position -150 -150 0
+position -150 -100 0
 rotation 0
 size 20 20 0
 color 1
